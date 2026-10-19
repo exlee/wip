@@ -51,6 +51,7 @@ toJson d =
       , ("url", Str (itemUrl i))
       , ("status", Str (Store.statusToString (itemStatus i)))
       , ("activity", Num (fromIntegral (itemActivity i)))
+      , ("strip", Bool (itemStrip i))
       ]
         ++ maybe [] (\c -> [("color", Str (Color.toHex c))]) (itemColor i)
 
@@ -74,6 +75,7 @@ ofJson v =
         , itemUrl = fromMaybe "" (str "url" o)
         , itemStatus = status
         , itemColor = str "color" o >>= Color.parse
+        , itemStrip = member "strip" o /= Just (Bool False)
         , itemActivity = fromMaybe 0 (int "activity" o)
         }
 

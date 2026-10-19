@@ -12,7 +12,7 @@ module Gui
 import Control.Monad (forM_, void, when)
 import Data.IORef
 import qualified Data.Map.Strict as Map
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (isJust)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Macos (commandHeld, floatOverEverything, statusLevel)
 import Sdl (Event (..))
@@ -78,8 +78,8 @@ draw r font density port hover elapsed items = do
         y = rowY idx
     Sdl.setColor r bg
     Sdl.fillRect r margin (y + 2) (width - (2 * margin)) (rowH - 2)
-    -- A custom background keeps the status visible as a strip on the left.
-    let strip = if isNothing (itemColor item) then 0 else statusStrip
+    -- A custom background keeps the status visible as a strip on the left until recoloured.
+    let strip = if isJust (itemColor item) && itemStrip item then statusStrip else 0
     when (strip > 0) $ do
       Sdl.setColor r statusBg
       Sdl.fillRect r margin (y + 2) strip (rowH - 2)

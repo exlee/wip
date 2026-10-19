@@ -218,7 +218,7 @@ testLayout = do
   check "layout first row" (hit 10 (Layout.rowY 0 + 1) == Row 0)
   check "layout second row" (hit 10 (Layout.rowY 1 + 1) == Row 1)
   check "layout past rows" (hit 10 (Layout.rowY 2 + 1) == NoHit)
-  let item = Item {itemId = "7", itemTitle = "t", itemUrl = "https://example.com", itemStatus = InProgress, itemColor = Nothing, itemActivity = 0}
+  let item = Item {itemId = "7", itemTitle = "t", itemUrl = "https://example.com", itemStatus = InProgress, itemColor = Nothing, itemStrip = True, itemActivity = 0}
   check "click opens url" (Layout.rowClick False item == Layout.OpenUrl "https://example.com")
   check "cmd-click deletes" (Layout.rowClick True item == Layout.DeleteItem "7")
   check "cmd-click deletes item without url" (Layout.rowClick True item {itemUrl = ""} == Layout.DeleteItem "7")
@@ -337,7 +337,9 @@ testCli = do
   check "cli rejects empty id" (isLeft emptyId)
   let colorOf out = Store.find s (trimmed out) >>= pure . (>>= itemColor)
   run "add" ["--color=steelblue", "Tinted"] >>= \case
-    Right out -> colorOf out >>= check "cli add named color" . (== Color.parse "steelblue")
+    Right out -> do
+      colorOf out >>= check "cli add named color" . (== Color.parse "steelblue")
+      Store.find s (trimmed out) >>= check "cli add color keeps status strip" . (== Just True) . fmap itemStrip
     Left e -> check ("cli add named color: " ++ e) False
   run "add" ["--color", "#0f0", "Hex"] >>= \case
     Right out -> colorOf out >>= check "cli add hex color" . (== Just (0, 255, 0))
@@ -358,6 +360,8 @@ testCli = do
       r1 <- run "color" [i, "navy"]
       c1 <- color
       check "cli color sets" (r1 == Right "" && c1 == Color.parse "navy")
+      strip <- fmap itemStrip <$> Store.find s i
+      check "cli color removes status strip" (strip == Just False)
       after <- activity
       check "cli color keeps activity" (after == before)
       r2 <- run "color" [i, "#123"]
@@ -392,6 +396,7 @@ testPersist = do
   x <- Store.addNew a "x" "https://x" InProgress
   _ <- Store.add a (Just "pr-1") (Just (1, 2, 3)) "y \"quoted\"" "" InProgress
   _ <- Store.setStatus a (itemId x) Done
+  _ <- Store.setColor a (itemId x) (Just (4, 5, 6))
   Persist.save path a
   b <- Store.create
   loaded <- Persist.load path b

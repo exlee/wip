@@ -30,12 +30,14 @@ data Status = InProgress | Done
 
 -- | 'itemActivity' grows on every add or status change; higher is more recent.
 -- 'itemColor' overrides the status colour as the row background.
+-- 'itemStrip' keeps the status visible as a strip beside that colour; 'setColor' clears it.
 data Item = Item
   { itemId :: String
   , itemTitle :: String
   , itemUrl :: String
   , itemStatus :: Status
   , itemColor :: Maybe Color
+  , itemStrip :: Bool
   , itemActivity :: Int
   }
   deriving (Eq, Show)
@@ -87,7 +89,7 @@ add store mid color title url status = withState store $ \st0 ->
          in if taken i then fresh st' else (st', i)
       (st1, newId) = maybe (fresh st0) (st0,) mid
       (st2, act) = nextActivity st1
-      item = Item newId title url status color act
+      item = Item newId title url status color True act
       items'
         | taken newId = replaceItem item (stItems st2)
         | otherwise = stItems st2 ++ [item]
@@ -123,12 +125,13 @@ setStatus store i status = withState store $ \st ->
        in (touch st' {stItems = replaceItem item (stItems st')}, Just item)
 
 -- | Colour changes do not count as activity: deck order stays put.
+-- The new colour fills the whole row, without the status strip.
 setColor :: Store -> String -> Maybe Color -> IO (Maybe Item)
 setColor store i color = withState store $ \st ->
   case List.find ((== i) . itemId) (stItems st) of
     Nothing -> (st, Nothing)
     Just old ->
-      let item = old {itemColor = color}
+      let item = old {itemColor = color, itemStrip = False}
        in (touch st {stItems = replaceItem item (stItems st)}, Just item)
 
 find :: Store -> String -> IO (Maybe Item)
