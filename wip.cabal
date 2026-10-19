@@ -1,0 +1,84 @@
+cabal-version:      3.0
+name:               wip
+version:            0.1.0
+synopsis:           Floating SDL3 work-in-progress list with an MCP server
+build-type:         Simple
+extra-doc-files:    README.md
+
+common shared
+  default-language: GHC2021
+  default-extensions: LambdaCase
+  ghc-options:      -Wall
+  build-depends:    base >=4.18 && <5
+
+library
+  import:           shared
+  hs-source-dirs:   src
+  exposed-modules:
+    Wip.AtExit
+    Wip.Cli
+    Wip.Color
+    Wip.DeckLogic
+    Wip.Http
+    Wip.Hyphen
+    Wip.Json
+    Wip.Layout
+    Wip.Mcp
+    Wip.Persist
+    Wip.Socket
+    Wip.Store
+  build-depends:
+    , array
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , text
+    , transformers
+    , unix
+
+common exe
+  import:           shared
+  hs-source-dirs:   app
+  ghc-options:      -threaded
+  other-modules:
+    Args
+    Deck
+    Ffi
+    Gui
+    Macos
+    Sdl
+    Text
+  build-depends:
+    , array
+    , bytestring
+    , containers
+    , directory
+    , elgato-streamdeck
+    , process
+    , text
+    , time
+    , unix
+    , wip
+
+executable wip
+  import:           exe
+  main-is:          Main.hs
+
+executable demo
+  import:           exe
+  main-is:          Demo.hs
+
+test-suite wip-test
+  import:           shared
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          TestWip.hs
+  ghc-options:      -threaded
+  build-depends:
+    , array
+    , bytestring
+    , directory
+    , filepath
+    , unix
+    , wip
