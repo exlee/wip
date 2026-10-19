@@ -124,6 +124,8 @@ runGui fontPath store port = do
   hover <- newIORef NoHit
   pressed <- newIORef NoHit
   drag <- newIORef Nothing
+  -- Pressed row: item id, press height, whether it moved past dragThreshold.
+  rowDrag <- newIORef Nothing
   shownVersion <- newIORef (-1)
   shownRows <- newIORef rows0
   running <- newIORef True
@@ -152,11 +154,25 @@ runGui fontPath store port = do
           writeIORef shownVersion (-1)
       handle rows items = \case
         Quit -> writeIORef running False
-        MouseMotion x y -> setHover (hit rows x y)
+        MouseMotion x y -> do
+          setHover (hit rows x y)
+          readIORef rowDrag >>= \case
+            Just (i, y0, moved) | moved || abs (y - y0) > dragThreshold -> do
+              -- A release outside the window may never arrive as MouseUp.
+              (_, _, held) <- Sdl.globalMouse
+              if held
+                then do
+                  writeIORef rowDrag (Just (i, y0, True))
+                  void (Store.move store i (dropIndex rows y))
+                else writeIORef rowDrag Nothing
+            _ -> pure ()
         MouseLeave -> setHover NoHit
         MouseDown 1 x y -> do
           let h = hit rows x y
           writeIORef pressed h
+          case h of
+            Row i | item : _ <- drop i items -> writeIORef rowDrag (Just (itemId item, y, False))
+            _ -> pure ()
           when (h == Header) $ do
             (gx, gy, _) <- Sdl.globalMouse
             (wx, wy) <- Sdl.getWindowPosition w
@@ -164,7 +180,8 @@ runGui fontPath store port = do
         MouseUp 1 x y -> do
           let h = hit rows x y
           p <- readIORef pressed
-          when (h == p) $ case h of
+          dragged <- maybe False (\(_, _, moved) -> moved) <$> readIORef rowDrag
+          when (h == p && not dragged) $ case h of
             Close -> writeIORef running False
             Row i -> case drop i items of
               item : _ -> do
@@ -176,6 +193,7 @@ runGui fontPath store port = do
               [] -> pure ()
             _ -> pure ()
           writeIORef pressed NoHit
+          writeIORef rowDrag Nothing
           writeIORef drag Nothing
         _ -> pure ()
       loop = do

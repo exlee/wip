@@ -16,6 +16,8 @@ module Wip.Layout
   , marqueeOffset
   , marqueeOffsetWith
   , roundf
+  , dragThreshold
+  , dropIndex
   , RowClick (..)
   , rowClick
   ) where
@@ -98,3 +100,11 @@ rowClick command item
   | command = DeleteItem (itemId item)
   | itemUrl item /= "" = OpenUrl (itemUrl item)
   | otherwise = Ignore
+
+-- | Points the pointer must travel before a row press becomes a drag.
+dragThreshold :: Double
+dragThreshold = 4
+
+-- | Row index a dragged row lands on at height @y@, clamped to the @rows@ shown.
+dropIndex :: Int -> Double -> Int
+dropIndex rows y = max 0 (min (rows - 1) (floor ((y - headerH) / rowH)))

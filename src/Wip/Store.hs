@@ -10,6 +10,7 @@ module Wip.Store
   , add
   , addNew
   , delete
+  , move
   , setStatus
   , setColor
   , find
@@ -101,6 +102,16 @@ delete store i = withState store $ \st ->
   let kept = filter ((/= i) . itemId) (stItems st)
       removed = length kept < length (stItems st)
    in (if removed then touch st {stItems = kept} else st, removed)
+
+-- | Moves item @i@ to position @to@ (clamped). Not activity: deck order stays put.
+move :: Store -> String -> Int -> IO Bool
+move store i to = withState store $ \st ->
+  case List.partition ((== i) . itemId) (stItems st) of
+    ([item], rest) ->
+      let (before, after) = splitAt (max 0 to) rest
+          items' = before ++ item : after
+       in (if items' /= stItems st then touch st {stItems = items'} else st, True)
+    _ -> (st, False)
 
 setStatus :: Store -> String -> Status -> IO (Maybe Item)
 setStatus store i status = withState store $ \st ->

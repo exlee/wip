@@ -9,6 +9,7 @@ import qualified Data.ByteString.Char8 as B8
 import Data.Either (isLeft, isRight)
 import Data.IORef
 import Data.List (isPrefixOf)
+import qualified Data.List as List
 import Data.Maybe (fromJust, isJust, isNothing, mapMaybe)
 import System.Directory (doesFileExist, getTemporaryDirectory, removeDirectoryRecursive)
 import System.Exit (exitFailure)
@@ -180,6 +181,34 @@ testHttp = do
   foreign_ <- httpPost port (Just "https://evil.example") "{}"
   check "http foreign origin 403" ("HTTP/1.1 403" `isPrefixOf` foreign_)
   check "http header lookup is case-insensitive" (Http.header "content-length" ["Content-Length: 12"] == Just "12")
+
+testMove :: IO ()
+testMove = do
+  s <- Store.create
+  mapM_ (\t -> Store.addNew s t "" InProgress) ["a", "b", "c"]
+  let titles = map itemTitle <$> Store.items s
+  activity0 <- map itemActivity <$> Store.items s
+  v0 <- Store.version s
+  same <- Store.move s "1" 0
+  v1 <- Store.version s
+  check "move to own place keeps version" (same && v1 == v0)
+  _ <- Store.move s "1" 2
+  titles >>= check "move to end" . (== ["b", "c", "a"])
+  _ <- Store.move s "1" 0
+  titles >>= check "move to front" . (== ["a", "b", "c"])
+  _ <- Store.move s "3" 99
+  titles >>= check "move past end clamps" . (== ["a", "b", "c"])
+  _ <- Store.move s "3" 1
+  titles >>= check "move into middle" . (== ["a", "c", "b"])
+  v2 <- Store.version s
+  check "move bumps version" (v2 > v0)
+  missing <- Store.move s "nope" 0
+  check "move unknown id" (not missing)
+  activity1 <- map itemActivity <$> Store.items s
+  check "move is not activity" (List.sort activity1 == List.sort activity0)
+  check "drop index above rows clamps" (Layout.dropIndex 3 0 == 0)
+  check "drop index on second row" (Layout.dropIndex 3 (Layout.rowY 1 + 1) == 1)
+  check "drop index below rows clamps" (Layout.dropIndex 3 (Layout.rowY 9) == 2)
 
 testLayout :: IO ()
 testLayout = do
@@ -430,6 +459,7 @@ main = do
   testMcp
   testHttp
   testLayout
+  testMove
   testDeckLogic
   testCli
   testPersist

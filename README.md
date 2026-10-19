@@ -2,7 +2,7 @@
 
 Floating, always-on-top SDL3 window listing work items. Orange = in progress, green = done.
 An item with `--color` uses that background; in the window a strip on its left edge keeps the status colour.
-Click an item to open its URL; Cmd-click deletes it. Drag the header to move. `x` quits.
+Click an item to open its URL; Cmd-click deletes it. Drag a row to reorder; drag the header to move. `x` quits.
 On macOS the window sits at NSStatusWindowLevel on every Space, including over full-screen apps.
 
 Bindings: hand-written Haskell FFI bindings to SDL3 (`app/Sdl.hs`), loaded at runtime with
