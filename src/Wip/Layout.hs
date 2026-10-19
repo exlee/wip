@@ -16,9 +16,12 @@ module Wip.Layout
   , marqueeOffset
   , marqueeOffsetWith
   , roundf
+  , RowClick (..)
+  , rowClick
   ) where
 
 import Data.Fixed (mod')
+import Wip.Store (Item (..))
 
 width, headerH, rowH, margin, closeW :: Double
 width = 360
@@ -85,3 +88,13 @@ marqueeOffsetWith m overflow t
 -- | Rounds half away from zero, like C's round.
 roundf :: Double -> Double
 roundf x = if x < 0 then negate (fromInteger (floor (negate x + 0.5))) else fromInteger (floor (x + 0.5))
+
+data RowClick = OpenUrl String | DeleteItem String | Ignore
+  deriving (Eq, Show)
+
+-- | What a click on @item@ does; @command@ is whether Cmd was held.
+rowClick :: Bool -> Item -> RowClick
+rowClick command item
+  | command = DeleteItem (itemId item)
+  | itemUrl item /= "" = OpenUrl (itemUrl item)
+  | otherwise = Ignore

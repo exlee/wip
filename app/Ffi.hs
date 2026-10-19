@@ -81,5 +81,6 @@ foreign import ccall unsafe "dynamic" call_pfpf_u32 :: FunPtr (Ptr CFloat -> Ptr
 foreign import ccall unsafe "dynamic" call_ppl_v :: FunPtr (Ptr () -> Ptr () -> CLong -> IO ()) -> Ptr () -> Ptr () -> CLong -> IO ()
 foreign import ccall unsafe "dynamic" call_ppul_v :: FunPtr (Ptr () -> Ptr () -> CULong -> IO ()) -> Ptr () -> Ptr () -> CULong -> IO ()
 foreign import ccall unsafe "dynamic" call_ppb_v :: FunPtr (Ptr () -> Ptr () -> CBool -> IO ()) -> Ptr () -> Ptr () -> CBool -> IO ()
+foreign import ccall unsafe "dynamic" call_pp_ul :: FunPtr (Ptr () -> Ptr () -> IO CULong) -> Ptr () -> Ptr () -> IO CULong
 -- Blocks while waiting for events, so other Haskell threads keep running.
 foreign import ccall safe "dynamic" call_pu8i32_b :: FunPtr (Ptr Word8 -> Int32 -> IO CBool) -> Ptr Word8 -> Int32 -> IO CBool

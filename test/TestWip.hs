@@ -189,6 +189,11 @@ testLayout = do
   check "layout first row" (hit 10 (Layout.rowY 0 + 1) == Row 0)
   check "layout second row" (hit 10 (Layout.rowY 1 + 1) == Row 1)
   check "layout past rows" (hit 10 (Layout.rowY 2 + 1) == NoHit)
+  let item = Item {itemId = "7", itemTitle = "t", itemUrl = "https://example.com", itemStatus = InProgress, itemColor = Nothing, itemActivity = 0}
+  check "click opens url" (Layout.rowClick False item == Layout.OpenUrl "https://example.com")
+  check "cmd-click deletes" (Layout.rowClick True item == Layout.DeleteItem "7")
+  check "cmd-click deletes item without url" (Layout.rowClick True item {itemUrl = ""} == Layout.DeleteItem "7")
+  check "click without url does nothing" (Layout.rowClick False item {itemUrl = ""} == Layout.Ignore)
   check "layout grows with rows" (Layout.height 3 > Layout.height 2)
   let long = replicate 200 'a'
   check "fit_text cuts" (fromIntegral (length (Layout.fitText 12 long 100)) * 12 <= (100 :: Double))

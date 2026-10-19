@@ -14,7 +14,7 @@ import Data.IORef
 import qualified Data.Map.Strict as Map
 import Data.Maybe (isJust, isNothing)
 import Data.Time.Clock.POSIX (getPOSIXTime)
-import Macos (floatOverEverything, statusLevel)
+import Macos (commandHeld, floatOverEverything, statusLevel)
 import Sdl (Event (..))
 import qualified Sdl
 import Text (Font)
@@ -167,8 +167,13 @@ runGui fontPath store port = do
           when (h == p) $ case h of
             Close -> writeIORef running False
             Row i -> case drop i items of
-              item : _ | itemUrl item /= "" -> void (Sdl.openUrl (itemUrl item))
-              _ -> pure ()
+              item : _ -> do
+                command <- commandHeld
+                case rowClick command item of
+                  OpenUrl url -> void (Sdl.openUrl url)
+                  DeleteItem i_ -> void (Store.delete store i_)
+                  Ignore -> pure ()
+              [] -> pure ()
             _ -> pure ()
           writeIORef pressed NoHit
           writeIORef drag Nothing
