@@ -6,3 +6,6 @@ source-repository-package
   type: git
   location: https://github.com/exlee/haskell-elgato-streamdeck.git
   tag: ad532350d0f3c947684fa618e1394705a5e1e54c
+
+package wip
+  ghc-options: -j +RTS -A128m -RTS
