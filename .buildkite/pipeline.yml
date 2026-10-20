@@ -1,0 +1,42 @@
+# Builds and tests the wip binary on Linux and macOS agents.
+# Runs on Buildkite hosted agents of the Default cluster. Queue keys can be overridden in the pipeline environment:
+# LINUX_QUEUE (default "linux-medium"), MACOS_QUEUE (default "macos-15-medium"), RELEASE_QUEUE (default "linux-small").
+env:
+  GHC_VERSION: "9.14.1"
+  CABAL_VERSION: "3.16.1.0"
+
+steps:
+  - label: ":linux: Linux binary"
+    key: linux
+    command: .buildkite/scripts/binary.sh linux
+    # One volume per OS: GHC and the cabal store differ between Linux and macOS.
+    cache:
+      name: "haskell-linux"
+      paths: [".ci-cache"]
+    agents:
+      # GHC needs more memory than linux-small has.
+      queue: "${LINUX_QUEUE:-linux-medium}"
+    artifact_paths: "dist/*"
+
+  - label: ":mac: macOS binary"
+    key: macos
+    command: .buildkite/scripts/binary.sh macos
+    cache:
+      name: "haskell-macos"
+      paths: [".ci-cache"]
+    agents:
+      # macOS 15 keeps the binary runnable on older macOS releases.
+      queue: "${MACOS_QUEUE:-macos-15-medium}"
+    artifact_paths: "dist/*"
+
+  # Tags v* only: creates the GitHub release of the tag with this build's binaries.
+  # Needs the cluster secret WIP_GITHUB_TOKEN with "Contents: read and write" on the repository.
+  - label: ":github: Release"
+    key: release
+    depends_on: [linux, macos]
+    if: build.tag =~ /^v/
+    command: .buildkite/scripts/release.sh
+    agents:
+      queue: "${RELEASE_QUEUE:-linux-small}"
+    concurrency: 1
+    concurrency_group: "wip/release"

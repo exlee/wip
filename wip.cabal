@@ -3,7 +3,17 @@ name:               wip
 version:            0.1.0
 synopsis:           Floating SDL3 work-in-progress list with an MCP server
 build-type:         Simple
-extra-doc-files:    README.md
+license:            MPL-2.0
+license-file:       LICENSE
+author:             Alexander Przemysław Kamiński
+maintainer:         exlee@users.noreply.github.com
+homepage:           https://github.com/exlee/wip
+bug-reports:        https://github.com/exlee/wip/issues
+category:           Desktop
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+  docs/*.png
 
 common shared
   default-language: GHC2021

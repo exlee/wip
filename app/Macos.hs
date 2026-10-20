@@ -4,6 +4,7 @@ module Macos (floatOverEverything, statusLevel, floatingLevel, commandHeld) wher
 import Ffi
 import Foreign
 import Foreign.C.Types (CULong)
+import System.Info (os)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.DynamicLinker (RTLDFlags (..), dlopen)
 
@@ -50,10 +51,13 @@ commandFlag = 1 `shiftL` 20
 
 -- | Whether Cmd is held now. +[NSEvent modifierFlags] reads the global
 -- state, so it works while the window has no keyboard focus.
+-- Always False outside macOS.
 commandHeld :: IO Bool
-commandHeld = do
-  getClass <- call_s_p <$> symbol objc "objc_getClass"
-  nsEvent <- withUtf8 "NSEvent" getClass
-  flags <- call_pp_ul <$> msgSend
-  s <- sel "modifierFlags"
-  (\f -> f .&. commandFlag /= 0) <$> flags nsEvent s
+commandHeld
+  | os /= "darwin" = pure False
+  | otherwise = do
+      getClass <- call_s_p <$> symbol objc "objc_getClass"
+      nsEvent <- withUtf8 "NSEvent" getClass
+      flags <- call_pp_ul <$> msgSend
+      s <- sel "modifierFlags"
+      (\f -> f .&. commandFlag /= 0) <$> flags nsEvent s
